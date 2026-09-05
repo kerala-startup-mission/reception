@@ -1,0 +1,207 @@
+@import 'tailwindcss';
+
+/* Industry design system — tokens lifted from
+   _ds/industry-e711389a-d0e3-4719-8f21-0f761e2121fb/styles.css */
+:root {
+  --color-bg: #f2f2f3;
+  --color-surface: #e9e9ea;
+  --color-text: #1d1f20;
+  --color-accent: #5980a6;
+  --color-divider: color-mix(in srgb, #1d1f20 16%, transparent);
+
+  --color-neutral-500: #98989b;
+  --color-neutral-700: #5d5d60;
+  --color-neutral-800: #424244;
+
+  --color-accent-100: #eef6ff;
+  --color-accent-300: #b5d9fd;
+  --color-accent-400: #94bce3;
+  --color-accent-700: #416180;
+  --color-accent-800: #2c455d;
+  --color-accent-900: #1d2d3d;
+
+  --font-heading: 'Barlow Condensed', system-ui, sans-serif;
+  --font-body: 'Barlow', system-ui, sans-serif;
+  --font-ml: 'Noto Sans Malayalam', 'Barlow', system-ui, sans-serif;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  }
+}
+
+@layer components {
+  /* — blueprint frame: square, transparent, hairline, registration marks — */
+  .blueprint {
+    position: relative;
+    border: 1px solid var(--color-divider);
+    border-radius: 0;
+  }
+  .blueprint > .corner {
+    position: absolute;
+    width: 11px;
+    height: 11px;
+    color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  }
+  .blueprint > .corner::before,
+  .blueprint > .corner::after {
+    content: '';
+    position: absolute;
+    background: currentColor;
+  }
+  .blueprint > .corner::before {
+    left: 5px;
+    top: 0;
+    width: 1px;
+    height: 100%;
+  }
+  .blueprint > .corner::after {
+    top: 5px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+  }
+  .corner.tl { top: -6px; left: -6px; }
+  .corner.tr { top: -6px; right: -6px; }
+  .corner.bl { bottom: -6px; left: -6px; }
+  .corner.br { bottom: -6px; right: -6px; }
+
+  /* — buttons — */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 52px;
+    padding: 0 30px;
+    cursor: pointer;
+    border: 1px solid var(--color-divider);
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-text);
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 19px;
+    line-height: 1.2;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--color-bg);
+  }
+  .btn-primary:hover:not(:disabled) { background: #597ea3; }
+  .btn-primary:active:not(:disabled) { background: var(--color-accent-700); }
+  .btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+  .btn-ghost {
+    border-color: transparent;
+    color: var(--color-accent);
+    padding-inline: 3.4px;
+  }
+  .btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+
+  /* Malayalam sets its own face and drops the uppercase/tracking treatment */
+  [lang='ml'] .btn,
+  [lang='ml'] .dr-head,
+  [lang='ml'] .dr-rail-label,
+  [lang='ml'] .dr-purpose-title,
+  [lang='ml'] .dr-label {
+    font-family: var(--font-ml);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  [lang='ml'] .btn { font-size: 17px; }
+
+  /* — forms — */
+  .input {
+    width: 100%;
+    min-height: 52px;
+    padding: 10px 14px;
+    font: inherit;
+    font-size: 17px;
+    color: var(--color-text);
+    caret-color: var(--color-accent);
+    background: var(--color-surface);
+    border: 1px solid var(--color-divider);
+    border-radius: 0;
+  }
+  .input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+  .input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
+
+  .dr-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-neutral-700);
+  }
+
+  .dr-head {
+    margin: 0 0 10px;
+    margin-left: -0.052em;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: clamp(38px, 5.4vw, 62px);
+    line-height: 1.04;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+  }
+  [lang='ml'] .dr-head {
+    margin-left: 0;
+    font-size: clamp(30px, 4vw, 46px);
+    line-height: 1.25;
+  }
+
+  .dr-sub {
+    margin: 0;
+    /* max-width: 52ch; */
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--color-neutral-800);
+  }
+  [lang='ml'] .dr-sub { font-family: var(--font-ml); }
+
+  .dr-step {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-accent-700);
+  }
+}
+
+@keyframes dr-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
