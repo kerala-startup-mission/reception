@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildPayload, readResponse, readVisit } from './payload.js'
+import { buildPayload, formatCountdown, readResponse, readVisit } from './payload.js'
 
 const ksum = {
   name: '  Test Entry ',
@@ -143,4 +143,32 @@ test('a half-filled owner row counts as no owner', () => {
     owner: { name: '', designation: '', phone: '', email: '' },
   })
   assert.equal(v.owner, null)
+})
+
+test('the countdown renders as m:ss', () => {
+  assert.equal(formatCountdown(900), '15:00')
+  assert.equal(formatCountdown(754), '12:34')
+  assert.equal(formatCountdown(9), '0:09')
+  assert.equal(formatCountdown(0), '0:00')
+})
+
+test('a countdown past zero never renders negative', () => {
+  // a late interval tick can overshoot; the button is showing by then anyway
+  assert.equal(formatCountdown(-5), '0:00')
+})
+
+test('waitSeconds comes from the server, defaulting to a full wait', () => {
+  const withWait = readVisit(true, { token: 'V106', visitType: 'KSUM', waitSeconds: 300 })
+  assert.equal(withWait.waitSeconds, 300)
+
+  // rows written before the timestamp column: start the 15 minutes fresh
+  // rather than unlocking the button the moment the page opens
+  assert.equal(readVisit(true, { token: 'V106' }).waitSeconds, 0)
+  assert.equal(readVisit(true, { token: 'V106', waitSeconds: 'soon' }).waitSeconds, 0)
+})
+
+test('escalated is derived from the sheet, not from the client', () => {
+  assert.equal(readVisit(true, { token: 'V106', escalatedAt: '2026-09-08 14:30:00' }).escalated, true)
+  assert.equal(readVisit(true, { token: 'V106', escalatedAt: '' }).escalated, false)
+  assert.equal(readVisit(true, { token: 'V106' }).escalated, false)
 })

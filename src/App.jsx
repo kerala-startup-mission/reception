@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { COPY, PURPOSES, VISIT_TYPES } from './copy'
-import { buildPayload, readResponse, readVisit, TOKEN_URL, WEBHOOK_URL } from './payload'
+import {
+  buildPayload,
+  ESCALATE_AFTER_SECONDS,
+  ESCALATE_URL,
+  formatCountdown,
+  readResponse,
+  readVisit,
+  TOKEN_URL,
+  WEBHOOK_URL,
+} from './payload'
 
 const ORG_NAME = 'Kerala Startup Mission'
 const EMPTY = { name: '', email: '', phone: '', organisation: '', company: '' }
@@ -96,6 +105,77 @@ const Actions = ({ onBack, onNext, backLabel, label, disabled }) => (
     </button>
   </div>
 )
+
+// KSUM visitors only. Counts down what is left of the 15 minutes measured from
+// their check-in row, then offers the nudge. `visit.waitSeconds` comes from the
+// server so a reload resumes the countdown instead of restarting it.
+function Escalation({ t, id, waitSeconds, alreadyEscalated }) {
+  const [elapsed, setElapsed] = useState(0)
+  const [sending, setSending] = useState(false)
+  const [done, setDone] = useState(alreadyEscalated)
+  const [failed, setFailed] = useState(false)
+
+  const left = ESCALATE_AFTER_SECONDS - waitSeconds - elapsed
+  const waiting = !done && left > 0
+
+  useEffect(() => {
+    if (!waiting) return
+    const timer = setInterval(() => setElapsed((e) => e + 1), 1000)
+    return () => clearInterval(timer)
+  }, [waiting])
+
+  async function escalate() {
+    setSending(true)
+    setFailed(false)
+    try {
+      const res = await fetch(ESCALATE_URL, {
+        method: 'POST',
+        body: new URLSearchParams({ id }),
+      })
+      if (!res.ok) throw new Error(res.status)
+      setDone(true)
+    } catch {
+      setFailed(true)
+    } finally {
+      setSending(false)
+    }
+  }
+
+  if (done)
+    return (
+      <p className="mt-[26px] text-[15px] font-semibold text-[var(--color-accent-800)]">
+        {t.escalated}
+      </p>
+    )
+
+  if (waiting)
+    return (
+      <p className="mt-[26px] text-[15px] text-[var(--color-neutral-700)]">
+        {t.escalateIn}{' '}
+        <span className="font-semibold tabular-nums text-[var(--color-text)]">
+          {formatCountdown(left)}
+        </span>
+      </p>
+    )
+
+  return (
+    <div className="mt-[26px]">
+      <button
+        type="button"
+        className="btn btn-secondary"
+        onClick={escalate}
+        disabled={sending}
+      >
+        {sending ? t.escalating : t.escalate}
+      </button>
+      {failed && (
+        <p className="mt-3 text-[15px] font-semibold text-[var(--color-accent-800)]">
+          {t.escalateFailed}
+        </p>
+      )}
+    </div>
+  )
+}
 
 function Clock() {
   const [now, setNow] = useState(() => new Date())
@@ -565,6 +645,15 @@ export default function App() {
                         )}
                       </div>
                     </div>
+                  )}
+
+                  {visit.visitType === 'KSUM' && (
+                    <Escalation
+                      t={t}
+                      id={visitId}
+                      waitSeconds={visit.waitSeconds}
+                      alreadyEscalated={visit.escalated}
+                    />
                   )}
 
                   <div className="mt-[34px] flex gap-3">
