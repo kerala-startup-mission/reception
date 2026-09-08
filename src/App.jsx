@@ -636,24 +636,16 @@ export default function App() {
                           {visit.owner.designation}
                         </div>
                       )}
-                      <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-[15px]">
-                        {visit.owner.phone && (
-                          <a
-                            href={`tel:${visit.owner.phone}`}
-                            className="font-semibold text-[var(--color-accent-700)] underline-offset-4 hover:underline"
-                          >
-                            {visit.owner.phone}
-                          </a>
-                        )}
-                        {visit.owner.email && (
+                      {visit.owner.email && (
+                        <div className="mt-3 text-[15px]">
                           <a
                             href={`mailto:${visit.owner.email}`}
                             className="font-semibold text-[var(--color-accent-700)] underline-offset-4 hover:underline"
                           >
                             {visit.owner.email}
                           </a>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
