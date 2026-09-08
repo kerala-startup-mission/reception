@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildPayload, formatCountdown, readResponse, readVisit } from './payload.js'
+import { buildPayload, checkInAt, formatCountdown, readResponse, readVisit } from './payload.js'
 
 const ksum = {
   name: '  Test Entry ',
@@ -171,4 +171,13 @@ test('escalated is derived from the sheet, not from the client', () => {
   assert.equal(readVisit(true, { token: 'V106', escalatedAt: '2026-09-08 14:30:00' }).escalated, true)
   assert.equal(readVisit(true, { token: 'V106', escalatedAt: '' }).escalated, false)
   assert.equal(readVisit(true, { token: 'V106' }).escalated, false)
+})
+
+test('check-in time is derived from how long ago, not from a parsed string', () => {
+  // the sheet stores a timestamp with no UTC offset, so the browser must never
+  // parse it directly; waitSeconds carries an unambiguous instant instead
+  const now = Date.parse('2026-09-08T10:30:00Z')
+  assert.equal(checkInAt(0, now).toISOString(), '2026-09-08T10:30:00.000Z')
+  assert.equal(checkInAt(900, now).toISOString(), '2026-09-08T10:15:00.000Z')
+  assert.equal(checkInAt(3600, now).toISOString(), '2026-09-08T09:30:00.000Z')
 })

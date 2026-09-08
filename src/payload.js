@@ -57,6 +57,13 @@ export function readVisit(ok, data) {
   }
 }
 
+// The lookup reports how long ago the visitor checked in, not when. Deriving
+// the instant from that is correct in any timezone, unlike parsing the sheet's
+// offset-less timestamp string in the browser.
+export function checkInAt(waitSeconds, now = Date.now()) {
+  return new Date(now - waitSeconds * 1000)
+}
+
 // Seconds remaining as m:ss. Negative clamps to 0:00 so a late tick can never
 // render something like -0:01.
 export function formatCountdown(seconds) {
