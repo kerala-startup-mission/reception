@@ -143,14 +143,14 @@ function Escalation({ t, id, waitSeconds, alreadyEscalated }) {
 
   if (done)
     return (
-      <p className="mt-[26px] text-[15px] font-semibold text-[var(--color-accent-800)]">
+      <p className="text-[15px] font-semibold text-[var(--color-accent-800)] sm:text-right">
         {t.escalated}
       </p>
     )
 
   if (waiting)
     return (
-      <p className="mt-[26px] text-[15px] text-[var(--color-neutral-700)]">
+      <p className="text-[15px] text-[var(--color-neutral-700)] sm:text-right">
         {t.escalateIn}{' '}
         <span className="font-semibold tabular-nums text-[var(--color-text)]">
           {formatCountdown(left)}
@@ -159,7 +159,7 @@ function Escalation({ t, id, waitSeconds, alreadyEscalated }) {
     )
 
   return (
-    <div className="mt-[26px]">
+    <div className="flex flex-col gap-2 sm:items-end">
       <button
         type="button"
         className="btn btn-secondary"
@@ -169,7 +169,7 @@ function Escalation({ t, id, waitSeconds, alreadyEscalated }) {
         {sending ? t.escalating : t.escalate}
       </button>
       {failed && (
-        <p className="mt-3 text-[15px] font-semibold text-[var(--color-accent-800)]">
+        <p className="text-[15px] font-semibold text-[var(--color-accent-800)] sm:text-right">
           {t.escalateFailed}
         </p>
       )}
@@ -648,19 +648,18 @@ export default function App() {
                     </div>
                   )}
 
-                  {visit.visitType !== 'Incubated Company' && (
-                    <Escalation
-                      t={t}
-                      id={visitId}
-                      waitSeconds={visit.waitSeconds}
-                      alreadyEscalated={visit.escalated}
-                    />
-                  )}
-
-                  <div className="mt-[34px] flex gap-3">
+                  <div className="mt-[34px] flex flex-wrap items-center justify-between gap-4">
                     <button type="button" className="btn btn-secondary" onClick={reset}>
                       {t.newVisitor}
                     </button>
+                    {visit.visitType !== 'Incubated Company' && (
+                      <Escalation
+                        t={t}
+                        id={visitId}
+                        waitSeconds={visit.waitSeconds}
+                        alreadyEscalated={visit.escalated}
+                      />
+                    )}
                   </div>
                 </>
               )}
