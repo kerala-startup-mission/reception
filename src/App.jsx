@@ -1,9 +1,13 @@
-import { useEffect, useState } from 'react'
-import { COPY, PURPOSES } from './copy'
-import { buildPayload, readResponse, WEBHOOK_URL } from './payload'
+import { useCallback, useEffect, useState } from 'react'
+import { COPY, PURPOSES, VISIT_TYPES } from './copy'
+import { buildPayload, readResponse, readVisit, TOKEN_URL, WEBHOOK_URL } from './payload'
 
 const ORG_NAME = 'Kerala Startup Mission'
-const EMPTY = { name: '', email: '', phone: '', organisation: '' }
+const EMPTY = { name: '', email: '', phone: '', organisation: '', company: '' }
+
+const STEP = { LANG: 0, VISIT: 1, DETAILS: 2, PURPOSE: 3, REVIEW: 4, DONE: 5 }
+
+const idFromUrl = () => new URLSearchParams(window.location.search).get('id') || ''
 
 const Corners = () => (
   <>
@@ -12,6 +16,85 @@ const Corners = () => (
     <i className="corner bl" />
     <i className="corner br" />
   </>
+)
+
+// The language and visit-type screens are the same object: two big blueprint
+// cards, a headline and a sub-line each.
+function ChoiceCard({ onClick, title, note, lang, headingFont }) {
+  return (
+    <button
+      type="button"
+      lang={lang}
+      onClick={onClick}
+      className="blueprint flex min-h-[108px] cursor-pointer flex-col justify-center gap-2 bg-transparent px-[18px] py-5 text-left hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-100)] sm:min-h-[150px] sm:px-[26px] sm:py-[30px]"
+      style={lang === 'ml' ? { fontFamily: 'var(--font-ml)' } : null}
+    >
+      <Corners />
+      <span
+        className={
+          lang === 'ml'
+            ? 'text-4xl leading-[1.15] font-semibold'
+            : 'text-[40px] leading-none font-semibold uppercase'
+        }
+        style={headingFont ? { fontFamily: 'var(--font-heading)' } : null}
+      >
+        {title}
+      </span>
+      <span
+        className={
+          lang === 'ml'
+            ? 'text-sm text-[var(--color-neutral-700)]'
+            : 'text-[13px] tracking-[0.1em] text-[var(--color-neutral-700)] uppercase'
+        }
+      >
+        {note}
+      </span>
+    </button>
+  )
+}
+
+// Defined at module scope, not inside App: a component declared in the render
+// body is a new type every render, so React would remount the <input> Field
+// wraps on every keystroke and the field would lose focus after one character.
+const StepHead = ({ title, sub }) => (
+  <>
+    <h1 className="dr-head">{title}</h1>
+    <p className="dr-sub">{sub}</p>
+  </>
+)
+
+const Field = ({ label, children }) => (
+  <label className="block">
+    <span className="dr-label">{label}</span>
+    {children}
+  </label>
+)
+
+const Alert = ({ children }) =>
+  children && (
+    <div
+      role="alert"
+      className="mt-5 border-l-2 border-[var(--color-accent)] pl-3 text-sm font-semibold text-[var(--color-accent-800)]"
+    >
+      {children}
+    </div>
+  )
+
+const Actions = ({ onBack, onNext, backLabel, label, disabled }) => (
+  <div className="mt-[34px] flex flex-wrap gap-3">
+    <button type="button" className="btn btn-ghost flex-1 sm:flex-none" onClick={onBack}>
+      {backLabel}
+    </button>
+    <button
+      type="button"
+      className="btn btn-primary blueprint flex-1 sm:flex-none"
+      onClick={onNext}
+      disabled={disabled}
+    >
+      <Corners />
+      {label}
+    </button>
+  </div>
 )
 
 function Clock() {
@@ -41,16 +124,25 @@ function Clock() {
 }
 
 export default function App() {
+  // A page opened at ?id=... is a token page: jump straight to the done screen
+  // and let the lookup effect fill it in.
+  const [visitId, setVisitId] = useState(idFromUrl)
   const [lang, setLang] = useState(null)
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(() => (idFromUrl() ? STEP.DONE : STEP.LANG))
+  const [visitType, setVisitType] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [purpose, setPurpose] = useState(null)
+  const [otherReason, setOtherReason] = useState('')
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
-  const [refNo, setRefNo] = useState('')
+  const [visit, setVisit] = useState(null)
 
   const t = COPY[lang ?? 'en']
   const isML = lang === 'ml'
+  const isIncubated = visitType === 'Incubated Company'
+  const purposes = visitType ? PURPOSES[visitType] : []
+  const purposeValue = purpose === null ? null : purposes[purpose]
+  const requirement = purposeValue === 'Other' ? otherReason.trim() : purposeValue
 
   const set = (k) => (e) => {
     const v = e.target.value
@@ -58,19 +150,43 @@ export default function App() {
     setError('')
   }
 
-  function reset() {
+  // One lookup path for both a fresh check-in and a reopened link.
+  useEffect(() => {
+    if (!visitId) return
+    let live = true
+    setVisit(null)
+    fetch(`${TOKEN_URL}?id=${encodeURIComponent(visitId)}`)
+      .then(async (res) => readVisit(res.ok, await res.json().catch(() => null)))
+      .catch(() => ({ found: false }))
+      .then((v) => live && setVisit(v))
+    return () => {
+      live = false
+    }
+  }, [visitId])
+
+  const reset = useCallback(() => {
+    window.history.replaceState(null, '', window.location.pathname)
+    setVisitId('')
+    setVisit(null)
     setLang(null)
-    setStep(0)
+    setStep(STEP.LANG)
+    setVisitType(null)
     setForm(EMPTY)
     setPurpose(null)
+    setOtherReason('')
     setError('')
-    setRefNo('')
-  }
+  }, [])
 
   function next() {
-    if (step === 1 && (!form.name.trim() || (!form.phone.trim() && !form.email.trim())))
-      return setError(t.reqDetails)
-    if (step === 2 && purpose === null) return setError(t.reqPurpose)
+    if (step === STEP.DETAILS) {
+      if (!form.name.trim() || !form.phone.trim() || !form.email.trim())
+        return setError(t.reqDetails)
+      if (isIncubated && !form.company.trim()) return setError(t.reqCompany)
+    }
+    if (step === STEP.PURPOSE) {
+      if (purpose === null) return setError(t.reqPurpose)
+      if (purposeValue === 'Other' && !otherReason.trim()) return setError(t.reqOther)
+    }
     setStep(step + 1)
     setError('')
   }
@@ -86,13 +202,13 @@ export default function App() {
     try {
       const res = await fetch(WEBHOOK_URL, {
         method: 'POST',
-        body: buildPayload({ ...form, requirement: PURPOSES[purpose] }),
+        body: buildPayload({ ...form, requirement, visitType }),
       })
-      const data = await res.json().catch(() => null)
-      const out = readResponse(res.ok, data)
+      const out = readResponse(res.ok, await res.json().catch(() => null))
       if (!out.ok) return setError(out.error || t.sendFailed)
-      setRefNo(out.token || '\u2014')
-      setStep(4)
+      window.history.replaceState(null, '', `?id=${encodeURIComponent(out.id)}`)
+      setVisitId(out.id)
+      setStep(STEP.DONE)
     } catch {
       setError(t.sendFailed)
     } finally {
@@ -100,43 +216,7 @@ export default function App() {
     }
   }
 
-  const purposeLabel = purpose === null ? '—' : t.labels[PURPOSES[purpose]]
-
-  const StepHead = ({ kicker, title, sub }) => (
-    <>
-      {/* <div className="dr-step">{kicker}</div> */}
-      {/* <div className="mx-0 mt-3 mb-[22px] h-px bg-[var(--color-divider)]" /> */}
-      <h1 className="dr-head">{title}</h1>
-      <p className="dr-sub">{sub}</p>
-    </>
-  )
-
-  const Error = () =>
-    error && (
-      <div
-        role="alert"
-        className="mt-5 border-l-2 border-[var(--color-accent)] pl-3 text-sm font-semibold text-[var(--color-accent-800)]"
-      >
-        {error}
-      </div>
-    )
-
-  const Actions = ({ onNext, label }) => (
-    <div className="mt-[34px] flex flex-wrap gap-3">
-      <button type="button" className="btn btn-ghost flex-1 sm:flex-none" onClick={back}>
-        {t.back}
-      </button>
-      <button
-        type="button"
-        className="btn btn-primary blueprint flex-1 sm:flex-none"
-        onClick={onNext}
-        disabled={sending}
-      >
-        <Corners />
-        {label}
-      </button>
-    </div>
-  )
+  const purposeLabel = (value) => (value ? (t.labels[value] ?? value) : '—')
 
   return (
     <div
@@ -160,13 +240,13 @@ export default function App() {
 
       <nav className="flex gap-1.5 border-b border-[var(--color-divider)] px-[18px] sm:gap-2.5 sm:px-7 lg:px-[clamp(32px,4vw,72px)]">
         {t.rail.map((label, i) => {
-          const active = i === Math.min(step, 3)
+          const active = i === Math.min(step, STEP.REVIEW)
           const past = i < step
           return (
             <div
               key={label}
-              className={`flex min-w-0 flex-1 flex-col items-start gap-[3px] pt-2 pb-2.5 sm:flex-row sm:items-baseline sm:gap-2.5 sm:pt-2.5 sm:pb-3 ${
-                active ? 'border-t-2 border-[var(--color-accent)]' : 'border-t-2 border-[var(--color-divider)]'
+              className={`flex min-w-0 flex-1 flex-col items-start gap-[3px] border-t-2 pt-2 pb-2.5 sm:flex-row sm:items-baseline sm:gap-2.5 sm:pt-2.5 sm:pb-3 ${
+                active ? 'border-[var(--color-accent)]' : 'border-[var(--color-divider)]'
               }`}
             >
               <span
@@ -203,7 +283,7 @@ export default function App() {
           className="mx-auto w-full max-w-[760px]"
           style={{ animation: 'dr-in 320ms ease-out' }}
         >
-          {step === 0 && (
+          {step === STEP.LANG && (
             <div>
               <h1 className="dr-head">{COPY.en.langTitle}</h1>
               <p
@@ -214,51 +294,61 @@ export default function App() {
                 {COPY.ml.langTitle}
               </p>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-5">
-                <button
-                  type="button"
+                <ChoiceCard
+                  headingFont
+                  title="English"
+                  note="Continue in English"
                   onClick={() => {
                     setLang('en')
-                    setStep(1)
+                    setStep(STEP.VISIT)
                   }}
-                  className="blueprint flex min-h-[108px] cursor-pointer flex-col justify-center gap-2 bg-transparent px-[18px] py-5 text-left hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-100)] sm:min-h-[150px] sm:px-[26px] sm:py-[30px]"
-                >
-                  <Corners />
-                  <span
-                    className="text-[40px] leading-none font-semibold uppercase"
-                    style={{ fontFamily: 'var(--font-heading)' }}
-                  >
-                    English
-                  </span>
-                  <span className="text-[13px] tracking-[0.1em] text-[var(--color-neutral-700)] uppercase">
-                    Continue in English
-                  </span>
-                </button>
-                <button
-                  type="button"
+                />
+                <ChoiceCard
                   lang="ml"
+                  title="മലയാളം"
+                  note="മലയാളത്തിൽ തുടരുക"
                   onClick={() => {
                     setLang('ml')
-                    setStep(1)
+                    setStep(STEP.VISIT)
                   }}
-                  className="blueprint flex min-h-[108px] cursor-pointer flex-col justify-center gap-2 bg-transparent px-[18px] py-5 text-left hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-100)] sm:min-h-[150px] sm:px-[26px] sm:py-[30px]"
-                  style={{ fontFamily: 'var(--font-ml)' }}
-                >
-                  <Corners />
-                  <span className="text-4xl leading-[1.15] font-semibold">മലയാളം</span>
-                  <span className="text-sm text-[var(--color-neutral-700)]">
-                    മലയാളത്തിൽ തുടരുക
-                  </span>
+                />
+              </div>
+            </div>
+          )}
+
+          {step === STEP.VISIT && (
+            <div>
+              <StepHead title={t.visitTitle} sub={t.visitSub} />
+              <div className="mt-[30px] grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-5">
+                {VISIT_TYPES.map((v) => (
+                  <ChoiceCard
+                    key={v}
+                    headingFont
+                    lang={isML ? 'ml' : undefined}
+                    title={t.visitLabels[v]}
+                    note={t.visitNotes[v]}
+                    onClick={() => {
+                      setVisitType(v)
+                      setPurpose(null)
+                      setOtherReason('')
+                      setStep(STEP.DETAILS)
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="mt-[34px] flex flex-wrap gap-3">
+                <button type="button" className="btn btn-ghost" onClick={back}>
+                  {t.back}
                 </button>
               </div>
             </div>
           )}
 
-          {step === 1 && (
+          {step === STEP.DETAILS && (
             <div>
-              <StepHead kicker={t.stepTwo} title={t.detailsTitle} sub={t.detailsSub} />
+              <StepHead title={t.detailsTitle} sub={t.detailsSub} />
               <div className="mt-[30px] grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-x-[22px] gap-y-[18px]">
-                <label className="block">
-                  <span className="dr-label">{t.name}</span>
+                <Field label={t.name}>
                   <input
                     className="input"
                     value={form.name}
@@ -266,9 +356,8 @@ export default function App() {
                     placeholder={t.namePh}
                     autoFocus
                   />
-                </label>
-                <label className="block">
-                  <span className="dr-label">{t.phone}</span>
+                </Field>
+                <Field label={t.phone}>
                   <input
                     className="input"
                     type="tel"
@@ -277,9 +366,8 @@ export default function App() {
                     onChange={set('phone')}
                     placeholder={t.phonePh}
                   />
-                </label>
-                <label className="block">
-                  <span className="dr-label">{t.email}</span>
+                </Field>
+                <Field label={t.email}>
                   <input
                     className="input"
                     type="email"
@@ -287,27 +375,42 @@ export default function App() {
                     onChange={set('email')}
                     placeholder={t.emailPh}
                   />
-                </label>
-                <label className="block">
-                  <span className="dr-label">{t.org}</span>
+                </Field>
+                <Field label={t.org}>
                   <input
                     className="input"
                     value={form.organisation}
                     onChange={set('organisation')}
                     placeholder={t.orgPh}
                   />
-                </label>
+                </Field>
+                {isIncubated && (
+                  <Field label={t.company}>
+                    <input
+                      className="input"
+                      value={form.company}
+                      onChange={set('company')}
+                      placeholder={t.companyPh}
+                    />
+                  </Field>
+                )}
               </div>
-              <Error />
-              <Actions onNext={next} label={t.continue} />
+              <Alert>{error}</Alert>
+              <Actions
+                onBack={back}
+                onNext={next}
+                backLabel={t.back}
+                label={t.continue}
+                disabled={sending}
+              />
             </div>
           )}
 
-          {step === 2 && (
+          {step === STEP.PURPOSE && (
             <div>
-              <StepHead kicker={t.stepThree} title={t.purposeTitle} sub={t.purposeSub} />
+              <StepHead title={t.purposeTitle} sub={t.purposeSub} />
               <div className="mt-[30px] grid grid-cols-[repeat(auto-fit,minmax(230px,1fr))] gap-3.5">
-                {PURPOSES.map((p, i) => {
+                {purposes.map((p, i) => {
                   const on = purpose === i
                   return (
                     <button
@@ -337,20 +440,40 @@ export default function App() {
                         {t.labels[p]}
                       </span>
                       <span className="text-[13px] leading-[1.45] opacity-[0.78]">
-                        {t.notes[i]}
+                        {t.notes[p]}
                       </span>
                     </button>
                   )
                 })}
               </div>
-              <Error />
-              <Actions onNext={next} label={t.continue} />
+              {purposeValue === 'Other' && (
+                <div className="mt-[18px]">
+                  <input
+                    className="input"
+                    value={otherReason}
+                    onChange={(e) => {
+                      setOtherReason(e.target.value)
+                      setError('')
+                    }}
+                    placeholder={t.otherPh}
+                    autoFocus
+                  />
+                </div>
+              )}
+              <Alert>{error}</Alert>
+              <Actions
+                onBack={back}
+                onNext={next}
+                backLabel={t.back}
+                label={t.continue}
+                disabled={sending}
+              />
             </div>
           )}
 
-          {step === 3 && (
+          {step === STEP.REVIEW && (
             <div>
-              <StepHead kicker={t.stepFour} title={t.reviewTitle} sub={t.reviewSub} />
+              <StepHead title={t.reviewTitle} sub={t.reviewSub} />
               <div className="blueprint mt-[30px]">
                 <Corners />
                 <div className="flex items-baseline justify-between gap-4 border-b border-[var(--color-divider)] px-5 py-3.5">
@@ -360,60 +483,87 @@ export default function App() {
                   >
                     {t.sheet}
                   </span>
-                  <span className="text-xs tracking-[0.1em] tabular-nums text-[var(--color-neutral-700)]">
-                    {refNo || '—'}
-                  </span>
                 </div>
                 {[
-                  [t.keys[0], form.name],
-                  [t.keys[1], form.phone],
-                  [t.keys[2], form.email],
-                  [t.keys[3], form.organisation],
-                  [t.keys[4], purposeLabel],
+                  [t.keys.visit, t.visitLabels[visitType]],
+                  [t.keys.name, form.name],
+                  [t.keys.phone, form.phone],
+                  [t.keys.email, form.email],
+                  [t.keys.org, form.organisation],
+                  ...(isIncubated ? [[t.keys.company, form.company]] : []),
+                  [t.keys.purpose, purposeValue === 'Other' ? requirement : purposeLabel(purposeValue)],
                 ].map(([k, v]) => (
                   <div
                     key={k}
                     className="grid grid-cols-[minmax(120px,34%)_1fr] gap-4 border-b border-[var(--color-divider)] px-5 py-[13px]"
                   >
-                    <span className="text-xs font-semibold tracking-[0.1em] uppercase text-[var(--color-neutral-700)]">
+                    <span className="text-xs font-semibold tracking-[0.1em] text-[var(--color-neutral-700)] uppercase">
                       {k}
                     </span>
                     <span className="text-base leading-[1.4] font-medium">{v || '—'}</span>
                   </div>
                 ))}
               </div>
-              <Error />
-              <Actions onNext={submit} label={sending ? t.checkingIn : t.checkIn} />
+              <Alert>{error}</Alert>
+              <Actions
+                onBack={back}
+                onNext={submit}
+                backLabel={t.back}
+                label={sending ? t.checkingIn : t.checkIn}
+                disabled={sending}
+              />
             </div>
           )}
 
-          {step === 4 && (
+          {step === STEP.DONE && (
             <div>
-              <StepHead kicker={t.confirmed} title={t.thanks} sub={t.doneSub} />
-              <div className="blueprint mt-[30px] flex flex-wrap items-center gap-[30px] px-[26px] py-[30px]">
-                <Corners />
-                <div>
-                  <div className="text-xs font-semibold tracking-[0.12em] uppercase text-[var(--color-neutral-700)]">
-                    {t.token}
+              {visit === null && <p className="dr-sub">{t.loadingToken}</p>}
+
+              {visit?.found === false && (
+                <>
+                  <StepHead title={t.notFoundTitle} sub={t.notFoundSub} />
+                  <div className="mt-[34px] flex gap-3">
+                    <button type="button" className="btn btn-secondary" onClick={reset}>
+                      {t.newVisitor}
+                    </button>
                   </div>
-                  <div
-                    className="text-[64px] leading-none tracking-[0.02em] tabular-nums"
-                    style={{ fontFamily: 'var(--font-heading)' }}
-                  >
-                    {refNo}
+                </>
+              )}
+
+              {visit?.found && (
+                <>
+                  <StepHead title={t.thanks} sub={t.doneSub} />
+                  <div className="blueprint mt-[30px] flex flex-wrap items-center gap-[30px] px-[26px] py-[30px]">
+                    <Corners />
+                    <div>
+                      <div className="text-xs font-semibold tracking-[0.12em] text-[var(--color-neutral-700)] uppercase">
+                        {t.token}
+                      </div>
+                      <div
+                        className="text-[64px] leading-none tracking-[0.02em] tabular-nums"
+                        style={{ fontFamily: 'var(--font-heading)' }}
+                      >
+                        {visit.token}
+                      </div>
+                    </div>
+                    <div className="w-px self-stretch bg-[var(--color-divider)]" />
+                    <div className="min-w-[200px] flex-1 text-[15px] leading-[1.55]">
+                      <div className="font-semibold">{visit.name}</div>
+                      <div className="text-[var(--color-neutral-700)]">
+                        {purposeLabel(visit.requirement)}
+                      </div>
+                      {visit.company && (
+                        <div className="text-[var(--color-neutral-700)]">{visit.company}</div>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="w-px self-stretch bg-[var(--color-divider)]" />
-                <div className="min-w-[200px] flex-1 text-[15px] leading-[1.55]">
-                  <div className="font-semibold">{form.name}</div>
-                  <div className="text-[var(--color-neutral-700)]">{purposeLabel}</div>
-                </div>
-              </div>
-              <div className="mt-[34px] flex gap-3">
-                <button type="button" className="btn btn-secondary" onClick={reset}>
-                  {t.newVisitor}
-                </button>
-              </div>
+                  <div className="mt-[34px] flex gap-3">
+                    <button type="button" className="btn btn-secondary" onClick={reset}>
+                      {t.newVisitor}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
