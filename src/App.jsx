@@ -532,7 +532,14 @@ export default function App() {
 
               {visit?.found && (
                 <>
-                  <StepHead title={t.thanks} sub={t.doneSub} />
+                  <StepHead
+                    title={t.thanks}
+                    sub={
+                      visit.visitType === 'Incubated Company'
+                        ? t.doneSubIncubated
+                        : t.doneSub
+                    }
+                  />
                   <div className="blueprint mt-[30px] flex flex-wrap items-center gap-[30px] px-[26px] py-[30px]">
                     <Corners />
                     <div>

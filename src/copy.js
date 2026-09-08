@@ -58,6 +58,8 @@ export const COPY = {
 
     thanks: 'Thank you',
     doneSub: 'Our representative will meet you shortly. Kindly wait in the lobby area.',
+    doneSubIncubated:
+      'Please wait in the lobby and contact the representative from the company to proceed.',
     token: 'Token',
     loadingToken: 'Fetching your token…',
     notFoundTitle: 'Not found',
@@ -150,6 +152,8 @@ export const COPY = {
 
     thanks: 'നന്ദി',
     doneSub: 'ഞങ്ങളുടെ പ്രതിനിധി ഉടൻ നിങ്ങളെ കാണും. ദയവായി ലോബിയിൽ കാത്തിരിക്കുക.',
+    doneSubIncubated:
+      'ദയവായി ലോബിയിൽ കാത്തിരിക്കുക, തുടരാൻ കമ്പനിയുടെ പ്രതിനിധിയുമായി ബന്ധപ്പെടുക.',
     token: 'ടോക്കൺ',
     loadingToken: 'ടോക്കൺ എടുക്കുന്നു…',
     notFoundTitle: 'കണ്ടെത്തിയില്ല',
