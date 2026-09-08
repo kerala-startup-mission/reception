@@ -21,7 +21,6 @@ export const PURPOSES = {
 export const COPY = {
   en: {
     kicker: 'Digital Reception',
-    rail: ['Language', 'Visit type', 'Purpose of visit', 'Visitor details', 'Confirm'],
     langTitle: 'Select your language',
 
     visitTitle: 'Who are you here for?',
@@ -116,7 +115,6 @@ export const COPY = {
 
   ml: {
     kicker: 'ഡിജിറ്റൽ റിസപ്ഷൻ',
-    rail: ['ഭാഷ', 'സന്ദർശന തരം', 'സന്ദർശന ഉദ്ദേശ്യം', 'സന്ദർശക വിവരങ്ങൾ', 'സ്ഥിരീകരിക്കുക'],
     langTitle: 'ഭാഷ തിരഞ്ഞെടുക്കുക',
 
     visitTitle: 'ആരെയാണ് സന്ദർശിക്കുന്നത്?',

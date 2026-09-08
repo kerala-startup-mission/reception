@@ -238,44 +238,6 @@ export default function App() {
         <Clock />
       </header>
 
-      <nav className="flex gap-1.5 border-b border-[var(--color-divider)] px-[18px] sm:gap-2.5 sm:px-7 lg:px-[clamp(32px,4vw,72px)]">
-        {t.rail.map((label, i) => {
-          const active = i === Math.min(step, STEP.REVIEW)
-          const past = i < step
-          return (
-            <div
-              key={label}
-              className={`flex min-w-0 flex-1 flex-col items-start gap-[3px] border-t-2 pt-2 pb-2.5 sm:flex-row sm:items-baseline sm:gap-2.5 sm:pt-2.5 sm:pb-3 ${
-                active ? 'border-[var(--color-accent)]' : 'border-[var(--color-divider)]'
-              }`}
-            >
-              <span
-                className={`text-[11px] font-semibold tracking-[0.1em] tabular-nums sm:text-xs ${
-                  active
-                    ? 'text-[var(--color-accent-700)]'
-                    : past
-                      ? 'text-[var(--color-neutral-700)]'
-                      : 'text-[var(--color-neutral-500)]'
-                }`}
-              >
-                0{i + 1}
-              </span>
-              <span
-                className={`dr-rail-label text-xs leading-tight font-semibold tracking-[0.06em] uppercase sm:text-lg ${
-                  active
-                    ? 'text-[var(--color-text)]'
-                    : past
-                      ? 'text-[var(--color-neutral-700)]'
-                      : 'text-[var(--color-neutral-500)]'
-                }`}
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                {label}
-              </span>
-            </div>
-          )
-        })}
-      </nav>
 
       <main className="flex flex-1 items-start px-[18px] pt-[26px] pb-10 sm:px-7 sm:pt-10 sm:pb-14 lg:items-center lg:px-[clamp(32px,4vw,72px)] lg:py-[clamp(36px,5vw,72px)]">
         <div

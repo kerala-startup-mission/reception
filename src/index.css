@@ -132,7 +132,6 @@
   /* Malayalam sets its own face and drops the uppercase/tracking treatment */
   [lang='ml'] .btn,
   [lang='ml'] .dr-head,
-  [lang='ml'] .dr-rail-label,
   [lang='ml'] .dr-purpose-title,
   [lang='ml'] .dr-label {
     font-family: var(--font-ml);
