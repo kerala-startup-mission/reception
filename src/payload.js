@@ -50,7 +50,7 @@ export function readVisit(ok, data) {
     // Seconds already waited, measured server-side from the check-in row. A
     // missing value starts a fresh countdown rather than unlocking the button
     // immediately, which covers rows written before the timestamp column.
-    waitSeconds: Number.isFinite(data.waitSeconds) ? data.waitSeconds : 0,
+    waitSeconds: Number.isFinite(Number(data.waitSeconds)) ? Number(data.waitSeconds) : 0,
     // The sheet is the source of truth for "already nudged", so this survives
     // a reload and a different device in a way client storage would not.
     escalated: Boolean(data.escalatedAt),

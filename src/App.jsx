@@ -231,17 +231,18 @@ export default function App() {
   }
 
   // One lookup path for both a fresh check-in and a reopened link.
+  // Aborting on cleanup rather than just ignoring the result: React's
+  // StrictMode runs effects twice in development, and a dropped-but-still-
+  // in-flight request shows up as a duplicate call against the webhook.
   useEffect(() => {
     if (!visitId) return
-    let live = true
+    const stop = new AbortController()
     setVisit(null)
-    fetch(`${TOKEN_URL}?id=${encodeURIComponent(visitId)}`)
+    fetch(`${TOKEN_URL}?id=${encodeURIComponent(visitId)}`, { signal: stop.signal })
       .then(async (res) => readVisit(res.ok, await res.json().catch(() => null)))
-      .catch(() => ({ found: false }))
-      .then((v) => live && setVisit(v))
-    return () => {
-      live = false
-    }
+      .then(setVisit)
+      .catch((e) => e.name !== 'AbortError' && setVisit({ found: false }))
+    return () => stop.abort()
   }, [visitId])
 
   const reset = useCallback(() => {
@@ -647,7 +648,7 @@ export default function App() {
                     </div>
                   )}
 
-                  {visit.visitType === 'KSUM' && (
+                  {visit.visitType !== 'Incubated Company' && (
                     <Escalation
                       t={t}
                       id={visitId}
