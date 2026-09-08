@@ -564,6 +564,47 @@ export default function App() {
                       )}
                     </div>
                   </div>
+                  {visit.owner && (
+                    <div className="blueprint mt-[18px] px-[26px] py-[22px]">
+                      <Corners />
+                      <div className="text-xs font-semibold tracking-[0.12em] text-[var(--color-neutral-700)] uppercase">
+                        {t.contactTitle}
+                      </div>
+                      <div
+                        className="dr-purpose-title mt-2 text-[26px] leading-[1.1] font-semibold uppercase"
+                        style={{
+                          fontFamily: isML ? 'var(--font-ml)' : 'var(--font-heading)',
+                          ...(isML ? { fontSize: 20, lineHeight: 1.3 } : null),
+                        }}
+                      >
+                        {visit.owner.name}
+                      </div>
+                      {visit.owner.designation && (
+                        <div className="text-[15px] text-[var(--color-neutral-700)]">
+                          {visit.owner.designation}
+                        </div>
+                      )}
+                      <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-[15px]">
+                        {visit.owner.phone && (
+                          <a
+                            href={`tel:${visit.owner.phone}`}
+                            className="font-semibold text-[var(--color-accent-700)] underline-offset-4 hover:underline"
+                          >
+                            {visit.owner.phone}
+                          </a>
+                        )}
+                        {visit.owner.email && (
+                          <a
+                            href={`mailto:${visit.owner.email}`}
+                            className="font-semibold text-[var(--color-accent-700)] underline-offset-4 hover:underline"
+                          >
+                            {visit.owner.email}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mt-[34px] flex gap-3">
                     <button type="button" className="btn btn-secondary" onClick={reset}>
                       {t.newVisitor}

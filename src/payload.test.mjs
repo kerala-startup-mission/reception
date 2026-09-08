@@ -101,3 +101,46 @@ test('a miss is not-found rather than a blank token', () => {
   assert.deepEqual(readVisit(false, null), { found: false })
   assert.deepEqual(readVisit(true, { name: 'Test' }), { found: false })
 })
+
+test('a KSUM visit carries the enquiry owner', () => {
+  const v = readVisit(true, {
+    token: 'V106',
+    name: 'Test Entry',
+    requirement: 'Fab Lab',
+    visitType: 'KSUM',
+    company: '',
+    owner: {
+      name: 'Anjali Menon',
+      designation: 'Manager, Fab Lab',
+      phone: '+919495513259',
+      email: 'anjali@startupmission.in',
+    },
+  })
+  assert.equal(v.owner.name, 'Anjali Menon')
+  assert.equal(v.owner.phone, '+919495513259')
+})
+
+test('an incubated-company visit has no KSUM owner', () => {
+  const v = readVisit(true, {
+    token: 'V107',
+    name: 'Test Entry',
+    requirement: 'Meeting',
+    visitType: 'Incubated Company',
+    company: 'Acme Labs',
+    owner: null,
+  })
+  assert.equal(v.found, true)
+  assert.equal(v.owner, null)
+})
+
+test('a half-filled owner row counts as no owner', () => {
+  // the contact card is skipped entirely rather than rendered blank at a visitor
+  const v = readVisit(true, {
+    token: 'V108',
+    name: 'Test Entry',
+    requirement: 'Fab Lab',
+    visitType: 'KSUM',
+    owner: { name: '', designation: '', phone: '', email: '' },
+  })
+  assert.equal(v.owner, null)
+})

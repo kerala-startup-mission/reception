@@ -27,7 +27,9 @@ export function readResponse(ok, data) {
   return { ok: false, error: typeof data?.error === 'string' ? data.error : '' }
 }
 
-// Lookup answers 200 {token, name, requirement, visitType, company} or 404.
+// Lookup answers 200 {token, name, requirement, visitType, company, owner}
+// or 404. `owner` is the KSUM staff member who owns this enquiry type, and is
+// null for incubated-company visits and for purposes with no row yet.
 export function readVisit(ok, data) {
   if (!ok || !data?.token) return { found: false }
   return {
@@ -37,5 +39,8 @@ export function readVisit(ok, data) {
     requirement: data.requirement ?? '',
     visitType: data.visitType ?? '',
     company: data.company ?? '',
+    // Key off the name: a row half-filled in the Data Table would otherwise
+    // render an empty contact card at a visitor.
+    owner: data.owner?.name ? data.owner : null,
   }
 }

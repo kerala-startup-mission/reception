@@ -61,6 +61,7 @@ export const COPY = {
     doneSubIncubated:
       'Please wait in the lobby and contact the representative from the company to proceed.',
     token: 'Token',
+    contactTitle: 'Your point of contact',
     loadingToken: 'Fetching your token…',
     notFoundTitle: 'Not found',
     notFoundSub: 'That check-in reference does not exist. Please check in again.',
@@ -155,6 +156,7 @@ export const COPY = {
     doneSubIncubated:
       'ദയവായി ലോബിയിൽ കാത്തിരിക്കുക, തുടരാൻ കമ്പനിയുടെ പ്രതിനിധിയുമായി ബന്ധപ്പെടുക.',
     token: 'ടോക്കൺ',
+    contactTitle: 'നിങ്ങളെ സഹായിക്കുന്ന വ്യക്തി',
     loadingToken: 'ടോക്കൺ എടുക്കുന്നു…',
     notFoundTitle: 'കണ്ടെത്തിയില്ല',
     notFoundSub: 'ഈ ചെക്ക് ഇൻ റഫറൻസ് നിലവിലില്ല. വീണ്ടും ചെക്ക് ഇൻ ചെയ്യുക.',
