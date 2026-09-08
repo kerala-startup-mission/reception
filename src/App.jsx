@@ -5,7 +5,7 @@ import { buildPayload, readResponse, readVisit, TOKEN_URL, WEBHOOK_URL } from '.
 const ORG_NAME = 'Kerala Startup Mission'
 const EMPTY = { name: '', email: '', phone: '', organisation: '', company: '' }
 
-const STEP = { LANG: 0, VISIT: 1, DETAILS: 2, PURPOSE: 3, REVIEW: 4, DONE: 5 }
+const STEP = { LANG: 0, VISIT: 1, PURPOSE: 2, DETAILS: 3, REVIEW: 4, DONE: 5 }
 
 const idFromUrl = () => new URLSearchParams(window.location.search).get('id') || ''
 
@@ -331,7 +331,7 @@ export default function App() {
                       setVisitType(v)
                       setPurpose(null)
                       setOtherReason('')
-                      setStep(STEP.DETAILS)
+                      setStep(STEP.PURPOSE)
                     }}
                   />
                 ))}
