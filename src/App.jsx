@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { COPY, PURPOSES, VISIT_TYPES } from './copy'
 import {
   buildPayload,
-  checkInAt,
   ESCALATE_AFTER_SECONDS,
   ESCALATE_URL,
+  formatCheckIn,
   formatCountdown,
   readResponse,
   readVisit,
@@ -299,13 +299,6 @@ export default function App() {
   }
 
   const purposeLabel = (value) => (value ? (t.labels[value] ?? value) : '—')
-
-  // Pinned to the moment the lookup resolved: recomputing it on every render
-  // would let the displayed check-in time drift forward as the page sits open.
-  const checkedInAt = useMemo(
-    () => (visit?.found ? checkInAt(visit.waitSeconds) : null),
-    [visit],
-  )
 
   return (
     <div
@@ -613,14 +606,11 @@ export default function App() {
                       {visit.company && (
                         <div className="text-[var(--color-neutral-700)]">{visit.company}</div>
                       )}
-                      {checkedInAt && (
+                      {formatCheckIn(visit.timestamp) && (
                         <div className="text-[var(--color-neutral-700)]">
                           {t.checkedIn}{' '}
                           <span className="tabular-nums">
-                            {checkedInAt.toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
+                            {formatCheckIn(visit.timestamp)}
                           </span>
                         </div>
                       )}

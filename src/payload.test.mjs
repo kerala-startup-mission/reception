@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildPayload, checkInAt, formatCountdown, readResponse, readVisit } from './payload.js'
+import { buildPayload, formatCheckIn, formatCountdown, readResponse, readVisit } from './payload.js'
 
 const ksum = {
   name: '  Test Entry ',
@@ -173,11 +173,19 @@ test('escalated is derived from the sheet, not from the client', () => {
   assert.equal(readVisit(true, { token: 'V106' }).escalated, false)
 })
 
-test('check-in time is derived from how long ago, not from a parsed string', () => {
-  // the sheet stores a timestamp with no UTC offset, so the browser must never
-  // parse it directly; waitSeconds carries an unambiguous instant instead
-  const now = Date.parse('2026-09-08T10:30:00Z')
-  assert.equal(checkInAt(0, now).toISOString(), '2026-09-08T10:30:00.000Z')
-  assert.equal(checkInAt(900, now).toISOString(), '2026-09-08T10:15:00.000Z')
-  assert.equal(checkInAt(3600, now).toISOString(), '2026-09-08T09:30:00.000Z')
+test('the IST check-in stamp renders as date and time, unshifted', () => {
+  // read out of the string, never through Date: the sheet stores IST
+  // wall-clock with no offset, so a Date would move it into the viewer's zone
+  assert.equal(formatCheckIn('2026-09-08 16:02:00'), '8 Sep 2026, 16:02')
+  assert.equal(formatCheckIn('2026-01-01 09:05:00'), '1 Jan 2026, 09:05')
+})
+
+test('an unusable check-in stamp renders nothing rather than "Invalid Date"', () => {
+  for (const bad of ['', undefined, null, 'garbage', '2026-13-08 16:02:00'])
+    assert.equal(formatCheckIn(bad), '')
+})
+
+test('the raw timestamp is carried through the lookup', () => {
+  assert.equal(readVisit(true, { token: 'V1', timestamp: '2026-09-08 16:02:00' }).timestamp, '2026-09-08 16:02:00')
+  assert.equal(readVisit(true, { token: 'V1' }).timestamp, '')
 })

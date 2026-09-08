@@ -51,17 +51,26 @@ export function readVisit(ok, data) {
     // missing value starts a fresh countdown rather than unlocking the button
     // immediately, which covers rows written before the timestamp column.
     waitSeconds: Number.isFinite(Number(data.waitSeconds)) ? Number(data.waitSeconds) : 0,
+    timestamp: typeof data.timestamp === 'string' ? data.timestamp : '',
     // The sheet is the source of truth for "already nudged", so this survives
     // a reload and a different device in a way client storage would not.
     escalated: Boolean(data.escalatedAt),
   }
 }
 
-// The lookup reports how long ago the visitor checked in, not when. Deriving
-// the instant from that is correct in any timezone, unlike parsing the sheet's
-// offset-less timestamp string in the browser.
-export function checkInAt(waitSeconds, now = Date.now()) {
-  return new Date(now - waitSeconds * 1000)
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+// "2026-09-08 16:02:00" -> "8 Sep 2026, 16:02".
+// The sheet stores IST wall-clock with no UTC offset, so this reads the parts
+// out of the string rather than going through Date: a Date would be
+// reinterpreted in the viewer's timezone and shift the displayed time.
+export function formatCheckIn(timestamp) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/.exec(String(timestamp ?? ''))
+  if (!m) return ''
+  const [, year, month, day, hour, minute] = m
+  const name = MONTHS[Number(month) - 1]
+  if (!name) return ''
+  return `${Number(day)} ${name} ${year}, ${hour}:${minute}`
 }
 
 // Seconds remaining as m:ss. Negative clamps to 0:00 so a late tick can never
