@@ -683,11 +683,6 @@ export default function App() {
                       >
                         {visit.owner.name}
                       </div>
-                      {visit.owner.designation && (
-                        <div className="text-[15px] text-[var(--color-neutral-700)]">
-                          {visit.owner.designation}
-                        </div>
-                      )}
                       {visit.owner.email && (
                         <div className="mt-3 text-[15px]">
                           <a

@@ -109,16 +109,13 @@ test('a KSUM visit carries the enquiry owner', () => {
     requirement: 'Fab Lab',
     visitType: 'KSUM',
     company: '',
-    owner: {
-      name: 'Anjali Menon',
-      designation: 'Manager, Fab Lab',
-      email: 'anjali@startupmission.in',
-    },
+    owner: { name: 'Anjali Menon', email: 'anjali@startupmission.in' },
   })
   assert.equal(v.owner.name, 'Anjali Menon')
   assert.equal(v.owner.email, 'anjali@startupmission.in')
-  // the owner's phone stays in the Data Table but is never sent to the page
+  // phone and designation stay in the Data Table but are never sent to the page
   assert.equal(v.owner.phone, undefined)
+  assert.equal(v.owner.designation, undefined)
 })
 
 test('an incubated-company visit has no KSUM owner', () => {
