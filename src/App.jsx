@@ -30,21 +30,28 @@ const Corners = () => (
 
 // The language and visit-type screens are the same object: two big blueprint
 // cards, a headline and a sub-line each.
-function ChoiceCard({ onClick, title, note, lang, headingFont }) {
+function ChoiceCard({ onClick, title, note, lang, headingFont, compact }) {
+  const ml = lang === 'ml'
   return (
     <button
       type="button"
       lang={lang}
       onClick={onClick}
-      className="blueprint flex min-h-[108px] cursor-pointer flex-col justify-center gap-2 bg-transparent px-[18px] py-5 text-left hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-100)] sm:min-h-[150px] sm:px-[26px] sm:py-[30px]"
-      style={lang === 'ml' ? { fontFamily: 'var(--font-ml)' } : null}
+      className={`blueprint flex cursor-pointer flex-col justify-center gap-2 bg-transparent px-[18px] py-5 text-left hover:border-[var(--color-accent)] hover:bg-[var(--color-accent-100)] sm:px-[26px] sm:py-[30px] ${
+        compact ? 'min-h-[124px] sm:min-h-[164px]' : 'min-h-[108px] sm:min-h-[150px]'
+      }`}
+      style={ml ? { fontFamily: 'var(--font-ml)' } : null}
     >
       <Corners />
       <span
         className={
-          lang === 'ml'
-            ? 'text-4xl leading-[1.15] font-semibold'
-            : 'text-[40px] leading-none font-semibold uppercase'
+          ml
+            ? compact
+              ? 'text-[21px] leading-[1.35] font-semibold text-balance'
+              : 'text-4xl leading-[1.15] font-semibold'
+            : compact
+              ? 'text-[clamp(21px,2.1vw,29px)] leading-[1.12] font-semibold tracking-[0.01em] text-balance uppercase'
+              : 'text-[40px] leading-none font-semibold uppercase'
         }
         style={headingFont ? { fontFamily: 'var(--font-heading)' } : null}
       >
@@ -52,8 +59,8 @@ function ChoiceCard({ onClick, title, note, lang, headingFont }) {
       </span>
       <span
         className={
-          lang === 'ml'
-            ? 'text-sm text-[var(--color-neutral-700)]'
+          ml || compact
+            ? 'text-[14px] leading-snug text-pretty text-[var(--color-neutral-700)]'
             : 'text-[13px] tracking-[0.1em] text-[var(--color-neutral-700)] uppercase'
         }
       >
@@ -381,6 +388,7 @@ export default function App() {
                 {VISIT_TYPES.map((v) => (
                   <ChoiceCard
                     key={v}
+                    compact
                     headingFont
                     lang={isML ? 'ml' : undefined}
                     title={t.visitLabels[v]}
