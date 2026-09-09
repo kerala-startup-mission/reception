@@ -1,8 +1,9 @@
-export const VISIT_TYPES = ['KSUM', 'Incubated Company']
+export const VISIT_TYPES = ['KSUM', 'Incubated Company', 'Attend an Event']
 
 // Shared so the client, the review row and the tests cannot drift from the
 // exact string that goes on the wire and keys the owners table.
 export const APPOINTMENT = 'I have an Appointment'
+export const EVENT = 'Attend an Event'
 
 // Canonical purpose values — always sent to the API in English
 export const PURPOSES = {
@@ -34,10 +35,12 @@ export const COPY = {
     visitLabels: {
       KSUM: 'Kerala Startup Mission',
       'Incubated Company': 'Incubated Company',
+      [EVENT]: 'Attend an Event',
     },
     visitNotes: {
       KSUM: 'Funding, space, labs and general enquiries',
       'Incubated Company': 'A startup based in this building',
+      [EVENT]: 'A talk, workshop or programme here',
     },
 
     detailsTitle: 'Your details',
@@ -52,6 +55,8 @@ export const COPY = {
     orgPh: 'Company, college or institution',
     company: 'Company you are visiting',
     companyPh: 'Name of the startup',
+    eventName: 'Event name',
+    eventNamePh: 'e.g. Startup Meetup',
 
     purposeTitle: 'Purpose of visit',
     purposeSub: 'Choose the one that fits best.',
@@ -67,6 +72,7 @@ export const COPY = {
     doneSub: 'Our representative will meet you shortly. Kindly wait in the lobby area.',
     doneSubIncubated:
       'Please wait in the lobby and contact the representative from the company to proceed.',
+    doneSubEvent: 'Please proceed to the event venue.',
     token: 'Token',
     checkedIn: 'Checked in',
     contactTitle: 'Your point of contact',
@@ -88,6 +94,7 @@ export const COPY = {
     reqVisit: 'Please choose who you are visiting.',
     reqDetails: 'Please enter your name, phone number and email.',
     reqCompany: 'Please enter the company you are visiting.',
+    reqEvent: 'Please enter the name of the event.',
     reqPurpose: 'Please select a purpose of visit.',
     reqOther: 'Please tell us the reason for your visit.',
     reqMeetWho: 'Please tell us who you are here to meet.',
@@ -133,6 +140,7 @@ export const COPY = {
       org: 'Organisation',
       company: 'Visiting',
       meeting: 'Meeting',
+      event: 'Event',
       purpose: 'Purpose',
     },
   },
@@ -146,10 +154,12 @@ export const COPY = {
     visitLabels: {
       KSUM: 'കേരള സ്റ്റാർട്ടപ്പ് മിഷൻ',
       'Incubated Company': 'ഇൻകുബേറ്റഡ് കമ്പനി',
+      [EVENT]: 'ഒരു പരിപാടിയിൽ പങ്കെടുക്കാൻ',
     },
     visitNotes: {
       KSUM: 'ഫണ്ടിംഗ്, സ്ഥലം, ലാബുകൾ, പൊതു അന്വേഷണങ്ങൾ',
       'Incubated Company': 'ഈ കെട്ടിടത്തിലുള്ള ഒരു സ്റ്റാർട്ടപ്പ്',
+      [EVENT]: 'ഇവിടെ നടക്കുന്ന ചർച്ച, ശിൽപശാല അല്ലെങ്കിൽ പരിപാടി',
     },
 
     detailsTitle: 'നിങ്ങളുടെ വിവരങ്ങൾ',
@@ -164,6 +174,8 @@ export const COPY = {
     orgPh: 'കമ്പനി, കോളേജ് അല്ലെങ്കിൽ സ്ഥാപനം',
     company: 'സന്ദർശിക്കുന്ന കമ്പനി',
     companyPh: 'സ്റ്റാർട്ടപ്പിന്റെ പേര്',
+    eventName: 'പരിപാടിയുടെ പേര്',
+    eventNamePh: 'ഉദാ. സ്റ്റാർട്ടപ്പ് മീറ്റപ്പ്',
 
     purposeTitle: 'സന്ദർശന ഉദ്ദേശ്യം',
     purposeSub: 'ഏറ്റവും അനുയോജ്യമായത് തിരഞ്ഞെടുക്കുക.',
@@ -179,6 +191,7 @@ export const COPY = {
     doneSub: 'ഞങ്ങളുടെ പ്രതിനിധി ഉടൻ നിങ്ങളെ കാണും. ദയവായി ലോബിയിൽ കാത്തിരിക്കുക.',
     doneSubIncubated:
       'ദയവായി ലോബിയിൽ കാത്തിരിക്കുക, തുടരാൻ കമ്പനിയുടെ പ്രതിനിധിയുമായി ബന്ധപ്പെടുക.',
+    doneSubEvent: 'ദയവായി പരിപാടി നടക്കുന്ന സ്ഥലത്തേക്ക് പോകുക.',
     token: 'ടോക്കൺ',
     checkedIn: 'ചെക്ക് ഇൻ ചെയ്തത്',
     contactTitle: 'നിങ്ങളെ സഹായിക്കുന്ന വ്യക്തി',
@@ -200,6 +213,7 @@ export const COPY = {
     reqVisit: 'ആരെയാണ് സന്ദർശിക്കുന്നതെന്ന് തിരഞ്ഞെടുക്കുക.',
     reqDetails: 'പേര്, ഫോൺ നമ്പർ, ഇമെയിൽ എന്നിവ നൽകുക.',
     reqCompany: 'സന്ദർശിക്കുന്ന കമ്പനിയുടെ പേര് നൽകുക.',
+    reqEvent: 'പരിപാടിയുടെ പേര് നൽകുക.',
     reqPurpose: 'സന്ദർശന ഉദ്ദേശ്യം തിരഞ്ഞെടുക്കുക.',
     reqOther: 'സന്ദർശന കാരണം എഴുതുക.',
     reqMeetWho: 'ആരെയാണ് കാണാൻ വന്നതെന്ന് അറിയിക്കുക.',
@@ -243,6 +257,7 @@ export const COPY = {
       org: 'സ്ഥാപനം',
       company: 'സന്ദർശിക്കുന്നത്',
       meeting: 'കാണേണ്ട വ്യക്തി',
+      event: 'പരിപാടി',
       purpose: 'ഉദ്ദേശ്യം',
     },
   },

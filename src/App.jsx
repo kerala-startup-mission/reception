@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { APPOINTMENT, COPY, PURPOSES, VISIT_TYPES } from './copy'
+import { APPOINTMENT, COPY, EVENT, PURPOSES, VISIT_TYPES } from './copy'
 import {
   buildPayload,
   ESCALATE_AFTER_SECONDS,
@@ -222,13 +222,17 @@ export default function App() {
   const t = COPY[lang ?? 'en']
   const isML = lang === 'ml'
   const isIncubated = visitType === 'Incubated Company'
-  const purposes = visitType ? PURPOSES[visitType] : []
+  // An event has no purpose list: the event is the purpose.
+  const isEvent = visitType === EVENT
+  const purposes = (visitType && PURPOSES[visitType]) ?? []
   const purposeValue = purpose === null ? null : purposes[purpose]
   const requirement = purposeValue === 'Other' ? otherReason.trim() : purposeValue
   const isAppointment = purposeValue === APPOINTMENT
+  const requirementValue = isEvent ? EVENT : requirement
   // Held apart from form.company so backing out of an appointment cannot leave
   // a name behind on a branch that should send nothing.
-  const company = isIncubated ? form.company : isAppointment ? meetWho.trim() : ''
+  const company =
+    isIncubated || isEvent ? form.company : isAppointment ? meetWho.trim() : ''
 
   const set = (k) => (e) => {
     const v = e.target.value
@@ -269,7 +273,8 @@ export default function App() {
     if (step === STEP.DETAILS) {
       if (!form.name.trim() || !form.phone.trim() || !form.email.trim())
         return setError(t.reqDetails)
-      if (isIncubated && !form.company.trim()) return setError(t.reqCompany)
+      if ((isIncubated || isEvent) && !form.company.trim())
+        return setError(isEvent ? t.reqEvent : t.reqCompany)
     }
     if (step === STEP.PURPOSE) {
       if (purpose === null) return setError(t.reqPurpose)
@@ -281,7 +286,9 @@ export default function App() {
   }
 
   const back = () => {
-    setStep((s) => Math.max(0, s - 1))
+    // Events jump VISIT -> DETAILS, so stepping back one would strand the
+    // visitor on a purpose screen they were never shown.
+    setStep((s) => (isEvent && s === STEP.DETAILS ? STEP.VISIT : Math.max(0, s - 1)))
     setError('')
   }
 
@@ -291,7 +298,7 @@ export default function App() {
     try {
       const res = await fetch(WEBHOOK_URL, {
         method: 'POST',
-        body: buildPayload({ ...form, company, requirement, visitType }),
+        body: buildPayload({ ...form, company, requirement: requirementValue, visitType }),
       })
       const out = readResponse(res.ok, await res.json().catch(() => null))
       if (!out.ok) return setError(out.error || t.sendFailed)
@@ -383,7 +390,7 @@ export default function App() {
                       setPurpose(null)
                       setOtherReason('')
                       setMeetWho('')
-                      setStep(STEP.PURPOSE)
+                      setStep(v === EVENT ? STEP.DETAILS : STEP.PURPOSE)
                     }}
                   />
                 ))}
@@ -436,13 +443,13 @@ export default function App() {
                     placeholder={t.orgPh}
                   />
                 </Field>
-                {isIncubated && (
-                  <Field label={t.company}>
+                {(isIncubated || isEvent) && (
+                  <Field label={isEvent ? t.eventName : t.company}>
                     <input
                       className="input"
                       value={form.company}
                       onChange={set('company')}
-                      placeholder={t.companyPh}
+                      placeholder={isEvent ? t.eventNamePh : t.companyPh}
                     />
                   </Field>
                 )}
@@ -560,7 +567,17 @@ export default function App() {
                   [t.keys.org, form.organisation],
                   ...(isIncubated ? [[t.keys.company, form.company]] : []),
                   ...(isAppointment ? [[t.keys.meeting, meetWho]] : []),
-                  [t.keys.purpose, purposeValue === 'Other' ? requirement : purposeLabel(purposeValue)],
+                  ...(isEvent ? [[t.keys.event, form.company]] : []),
+                  // events show an Event row instead; a "Purpose: Attend an
+                  // Event" line beside it would just repeat the visit type
+                  ...(isEvent
+                    ? []
+                    : [
+                        [
+                          t.keys.purpose,
+                          purposeValue === 'Other' ? requirement : purposeLabel(purposeValue),
+                        ],
+                      ]),
                 ].map(([k, v]) => (
                   <div
                     key={k}
@@ -606,7 +623,9 @@ export default function App() {
                     sub={
                       visit.visitType === 'Incubated Company'
                         ? t.doneSubIncubated
-                        : t.doneSub
+                        : visit.visitType === EVENT
+                          ? t.doneSubEvent
+                          : t.doneSub
                     }
                   />
                   <div className="blueprint mt-[30px] flex flex-wrap items-center gap-[30px] px-[26px] py-[30px]">
@@ -679,6 +698,7 @@ export default function App() {
                       {t.newVisitor}
                     </button>
                     {visit.visitType !== 'Incubated Company' &&
+                      visit.visitType !== EVENT &&
                       visit.requirement !== APPOINTMENT && (
                         <Escalation
                           t={t}

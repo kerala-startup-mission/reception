@@ -208,3 +208,16 @@ test('a plain KSUM enquiry sends no company', () => {
   // Fab Lab must not carry the name along
   assert.equal(buildPayload({ ...ksum, company: '' }).get('company'), '')
 })
+
+test('an event sends its name in company and a fixed requirement', () => {
+  // the event is the purpose, so there is no purpose screen to pick from
+  const body = buildPayload({
+    ...ksum,
+    visitType: 'Attend an Event',
+    requirement: 'Attend an Event',
+    company: ' Startup Meetup ',
+  })
+  assert.equal(body.get('visitType'), 'Attend an Event')
+  assert.equal(body.get('requirement'), 'Attend an Event')
+  assert.equal(body.get('company'), 'Startup Meetup')
+})
