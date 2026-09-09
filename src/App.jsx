@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { COPY, PURPOSES, VISIT_TYPES } from './copy'
+import { APPOINTMENT, COPY, PURPOSES, VISIT_TYPES } from './copy'
 import {
   buildPayload,
   ESCALATE_AFTER_SECONDS,
@@ -214,6 +214,7 @@ export default function App() {
   const [form, setForm] = useState(EMPTY)
   const [purpose, setPurpose] = useState(null)
   const [otherReason, setOtherReason] = useState('')
+  const [meetWho, setMeetWho] = useState('')
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
   const [visit, setVisit] = useState(null)
@@ -224,6 +225,10 @@ export default function App() {
   const purposes = visitType ? PURPOSES[visitType] : []
   const purposeValue = purpose === null ? null : purposes[purpose]
   const requirement = purposeValue === 'Other' ? otherReason.trim() : purposeValue
+  const isAppointment = purposeValue === APPOINTMENT
+  // Held apart from form.company so backing out of an appointment cannot leave
+  // a name behind on a branch that should send nothing.
+  const company = isIncubated ? form.company : isAppointment ? meetWho.trim() : ''
 
   const set = (k) => (e) => {
     const v = e.target.value
@@ -256,6 +261,7 @@ export default function App() {
     setForm(EMPTY)
     setPurpose(null)
     setOtherReason('')
+    setMeetWho('')
     setError('')
   }, [])
 
@@ -268,6 +274,7 @@ export default function App() {
     if (step === STEP.PURPOSE) {
       if (purpose === null) return setError(t.reqPurpose)
       if (purposeValue === 'Other' && !otherReason.trim()) return setError(t.reqOther)
+      if (isAppointment && !meetWho.trim()) return setError(t.reqMeetWho)
     }
     setStep(step + 1)
     setError('')
@@ -284,7 +291,7 @@ export default function App() {
     try {
       const res = await fetch(WEBHOOK_URL, {
         method: 'POST',
-        body: buildPayload({ ...form, requirement, visitType }),
+        body: buildPayload({ ...form, company, requirement, visitType }),
       })
       const out = readResponse(res.ok, await res.json().catch(() => null))
       if (!out.ok) return setError(out.error || t.sendFailed)
@@ -375,6 +382,7 @@ export default function App() {
                       setVisitType(v)
                       setPurpose(null)
                       setOtherReason('')
+                      setMeetWho('')
                       setStep(STEP.PURPOSE)
                     }}
                   />
@@ -504,6 +512,22 @@ export default function App() {
                   />
                 </div>
               )}
+              {isAppointment && (
+                <div className="mt-[18px]">
+                  <Field label={t.meetWho}>
+                    <input
+                      className="input"
+                      value={meetWho}
+                      onChange={(e) => {
+                        setMeetWho(e.target.value)
+                        setError('')
+                      }}
+                      placeholder={t.meetWhoPh}
+                      autoFocus
+                    />
+                  </Field>
+                </div>
+              )}
               <Alert>{error}</Alert>
               <Actions
                 onBack={back}
@@ -535,6 +559,7 @@ export default function App() {
                   [t.keys.email, form.email],
                   [t.keys.org, form.organisation],
                   ...(isIncubated ? [[t.keys.company, form.company]] : []),
+                  ...(isAppointment ? [[t.keys.meeting, meetWho]] : []),
                   [t.keys.purpose, purposeValue === 'Other' ? requirement : purposeLabel(purposeValue)],
                 ].map(([k, v]) => (
                   <div
@@ -653,14 +678,15 @@ export default function App() {
                     <button type="button" className="btn btn-secondary" onClick={reset}>
                       {t.newVisitor}
                     </button>
-                    {visit.visitType !== 'Incubated Company' && (
-                      <Escalation
-                        t={t}
-                        id={visitId}
-                        waitSeconds={visit.waitSeconds}
-                        alreadyEscalated={visit.escalated}
-                      />
-                    )}
+                    {visit.visitType !== 'Incubated Company' &&
+                      visit.requirement !== APPOINTMENT && (
+                        <Escalation
+                          t={t}
+                          id={visitId}
+                          waitSeconds={visit.waitSeconds}
+                          alreadyEscalated={visit.escalated}
+                        />
+                      )}
                   </div>
                 </>
               )}

@@ -190,3 +190,21 @@ test('the raw timestamp is carried through the lookup', () => {
   assert.equal(readVisit(true, { token: 'V1', timestamp: '2026-09-08 16:02:00' }).timestamp, '2026-09-08 16:02:00')
   assert.equal(readVisit(true, { token: 'V1' }).timestamp, '')
 })
+
+test('an appointment carries who is being met in the company field', () => {
+  // reuses the existing field rather than adding one: it already means
+  // "the party you are here to see" and is already plumbed to the sheet
+  const body = buildPayload({
+    ...ksum,
+    requirement: 'I have an Appointment',
+    company: 'Anjali Menon',
+  })
+  assert.equal(body.get('requirement'), 'I have an Appointment')
+  assert.equal(body.get('company'), 'Anjali Menon')
+})
+
+test('a plain KSUM enquiry sends no company', () => {
+  // guards the leak: picking Appointment, typing a name, then switching to
+  // Fab Lab must not carry the name along
+  assert.equal(buildPayload({ ...ksum, company: '' }).get('company'), '')
+})

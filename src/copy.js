@@ -1,5 +1,9 @@
 export const VISIT_TYPES = ['KSUM', 'Incubated Company']
 
+// Shared so the client, the review row and the tests cannot drift from the
+// exact string that goes on the wire and keys the owners table.
+export const APPOINTMENT = 'I have an Appointment'
+
 // Canonical purpose values — always sent to the API in English
 export const PURPOSES = {
   KSUM: [
@@ -7,7 +11,9 @@ export const PURPOSES = {
     'Space Requirement',
     'Fab Lab',
     'Maker Village',
-    'General Enquiry',
+    'Incubation and Other Startup Enquiries',
+    'Vendors and Suppliers to KSUM',
+    APPOINTMENT,
   ],
   'Incubated Company': [
     'Meeting',
@@ -50,6 +56,8 @@ export const COPY = {
     purposeTitle: 'Purpose of visit',
     purposeSub: 'Choose the one that fits best.',
     otherPh: 'Tell us briefly why you are here',
+    meetWho: 'Who are you here to meet?',
+    meetWhoPh: 'Name of the person',
 
     reviewTitle: 'Review and confirm',
     reviewSub: 'Check the sheet below before you check in.',
@@ -82,14 +90,18 @@ export const COPY = {
     reqCompany: 'Please enter the company you are visiting.',
     reqPurpose: 'Please select a purpose of visit.',
     reqOther: 'Please tell us the reason for your visit.',
+    reqMeetWho: 'Please tell us who you are here to meet.',
     sendFailed: 'Could not register the visit. Please try again.',
 
     notes: {
-      'Financial Assistance': 'Funding, grants and scheme support',
-      'Space Requirement': 'Desks, cabins and incubation space',
-      'Fab Lab': 'Prototyping and fabrication access',
-      'Maker Village': 'Hardware and electronics programmes',
-      'General Enquiry': 'Anything else — we will route you',
+      'Financial Assistance': 'Grant & Seed Funding Schemes',
+      'Space Requirement': 'Coworking space & Dedicated space',
+      'Fab Lab': 'Digital fabrication and prototyping',
+      'Maker Village': 'Electronics and Hardware Incubator',
+      'Incubation and Other Startup Enquiries':
+        'Anything else related to incubation and startup',
+      'Vendors and Suppliers to KSUM': 'Deliveries, services and procurement',
+      [APPOINTMENT]: 'Scheduled meeting with a KSUM team member',
       Meeting: 'A scheduled or walk-in meeting',
       Interview: 'Attending a job interview',
       Internship: 'Internship joining or discussion',
@@ -101,6 +113,11 @@ export const COPY = {
       'Space Requirement': 'Space Requirement',
       'Fab Lab': 'Fab Lab',
       'Maker Village': 'Maker Village',
+      'Incubation and Other Startup Enquiries': 'Incubation and Other Startup Enquiries',
+      'Vendors and Suppliers to KSUM': 'Vendors and Suppliers to KSUM',
+      [APPOINTMENT]: APPOINTMENT,
+      // kept: historical sheet rows still carry this value, and the token page
+      // renders labels[requirement] — dropping it would blank their purpose
       'General Enquiry': 'General Enquiry',
       Meeting: 'Meeting',
       Interview: 'Interview',
@@ -115,6 +132,7 @@ export const COPY = {
       email: 'Email',
       org: 'Organisation',
       company: 'Visiting',
+      meeting: 'Meeting',
       purpose: 'Purpose',
     },
   },
@@ -150,6 +168,8 @@ export const COPY = {
     purposeTitle: 'സന്ദർശന ഉദ്ദേശ്യം',
     purposeSub: 'ഏറ്റവും അനുയോജ്യമായത് തിരഞ്ഞെടുക്കുക.',
     otherPh: 'സന്ദർശന കാരണം ചുരുക്കി എഴുതുക',
+    meetWho: 'ആരെയാണ് കാണാൻ വന്നത്?',
+    meetWhoPh: 'വ്യക്തിയുടെ പേര്',
 
     reviewTitle: 'പരിശോധിച്ച് സ്ഥിരീകരിക്കുക',
     reviewSub: 'ചെക്ക് ഇൻ ചെയ്യുന്നതിന് മുൻപ് വിവരങ്ങൾ പരിശോധിക്കുക.',
@@ -182,14 +202,18 @@ export const COPY = {
     reqCompany: 'സന്ദർശിക്കുന്ന കമ്പനിയുടെ പേര് നൽകുക.',
     reqPurpose: 'സന്ദർശന ഉദ്ദേശ്യം തിരഞ്ഞെടുക്കുക.',
     reqOther: 'സന്ദർശന കാരണം എഴുതുക.',
+    reqMeetWho: 'ആരെയാണ് കാണാൻ വന്നതെന്ന് അറിയിക്കുക.',
     sendFailed: 'രജിസ്റ്റർ ചെയ്യാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.',
 
     notes: {
-      'Financial Assistance': 'ഫണ്ടിംഗ്, ഗ്രാന്റ്, പദ്ധതി സഹായം',
-      'Space Requirement': 'ഡെസ്ക്, ക്യാബിൻ, ഇൻകുബേഷൻ സ്ഥലം',
-      'Fab Lab': 'പ്രോട്ടോടൈപ്പിംഗ്, ഫാബ്രിക്കേഷൻ സൗകര്യം',
-      'Maker Village': 'ഹാർഡ്‌വെയർ, ഇലക്ട്രോണിക്സ് പ്രോഗ്രാമുകൾ',
-      'General Enquiry': 'മറ്റെന്തും — ഞങ്ങൾ വഴികാട്ടും',
+      'Financial Assistance': 'ഗ്രാന്റ്, സീഡ് ഫണ്ടിംഗ് പദ്ധതികൾ',
+      'Space Requirement': 'കോ‑വർക്കിംഗ് സ്ഥലവും പ്രത്യേക സ്ഥലവും',
+      'Fab Lab': 'ഡിജിറ്റൽ ഫാബ്രിക്കേഷനും പ്രോട്ടോടൈപ്പിംഗും',
+      'Maker Village': 'ഇലക്ട്രോണിക്സ്, ഹാർഡ്‌വെയർ ഇൻകുബേറ്റർ',
+      'Incubation and Other Startup Enquiries':
+        'ഇൻകുബേഷനും സ്റ്റാർട്ടപ്പുമായി ബന്ധപ്പെട്ട മറ്റെന്തും',
+      'Vendors and Suppliers to KSUM': 'ഡെലിവറി, സേവനങ്ങൾ, സംഭരണം',
+      [APPOINTMENT]: 'കെഎസ്‌യുഎം ടീം അംഗവുമായി നിശ്ചയിച്ച കൂടിക്കാഴ്ച',
       Meeting: 'നിശ്ചയിച്ചതോ അല്ലാത്തതോ ആയ കൂടിക്കാഴ്ച',
       Interview: 'ജോലി അഭിമുഖത്തിന് ഹാജരാകുന്നു',
       Internship: 'ഇന്റേൺഷിപ്പ് ചേരൽ അല്ലെങ്കിൽ ചർച്ച',
@@ -201,6 +225,9 @@ export const COPY = {
       'Space Requirement': 'സ്ഥല ആവശ്യകത',
       'Fab Lab': 'ഫാബ് ലാബ്',
       'Maker Village': 'മേക്കർ വില്ലേജ്',
+      'Incubation and Other Startup Enquiries': 'ഇൻകുബേഷനും മറ്റ് സ്റ്റാർട്ടപ്പ് അന്വേഷണങ്ങളും',
+      'Vendors and Suppliers to KSUM': 'കെഎസ്‌യുഎം വെണ്ടർമാരും വിതരണക്കാരും',
+      [APPOINTMENT]: 'എനിക്ക് അപ്പോയിന്റ്മെന്റ് ഉണ്ട്',
       'General Enquiry': 'പൊതു അന്വേഷണം',
       Meeting: 'മീറ്റിംഗ്',
       Interview: 'അഭിമുഖം',
@@ -215,6 +242,7 @@ export const COPY = {
       email: 'ഇമെയിൽ',
       org: 'സ്ഥാപനം',
       company: 'സന്ദർശിക്കുന്നത്',
+      meeting: 'കാണേണ്ട വ്യക്തി',
       purpose: 'ഉദ്ദേശ്യം',
     },
   },
